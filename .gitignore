@@ -1,0 +1,5 @@
+# docker persistent volumes
+volumes/
+
+# IDE config
+.vscode/

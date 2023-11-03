@@ -1,0 +1,97 @@
+version: "2"
+
+services:
+  api:
+    container_name: service-api
+    image: denoland/deno:alpine-1.38.0
+    restart: always
+    environment:
+      - TZ=Europe/Madrid
+      - PORT=8000
+      - MONGO_URL=mongodb://root:root@db-mongodb:27017
+      - MONGO_HOST=db-mongodb
+      - RABBITMQ_URL=amqp://guest:guest@service-rabbitmq:5672
+      - SMTP_HOST=service-maildev
+      - SMTP_PORT=1025
+    ports:
+      - "80:8000"
+    volumes:
+      - ./api:/app
+    command: ["run", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "--unstable", "app/main.ts"]
+    depends_on:
+      - mongodb
+      - maildev
+  worker:
+    container_name: service-worker
+    image: denoland/deno:alpine-1.38.0
+    restart: always
+    environment:
+      - TZ=Europe/Madrid
+      - PORT=8000
+      - MONGO_URL=mongodb://root:root@db-mongodb:27017
+      - MONGO_HOST=db-mongodb
+      - RABBITMQ_URL=amqp://guest:guest@service-rabbitmq:5672
+      - SMTP_HOST=service-maildev
+      - SMTP_PORT=1025
+    volumes:
+      - ./workers:/app
+    command: ["run", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "--unstable", "app/notification_worker.ts"]
+    depends_on:
+      - rabbitmq
+      - mongodb
+  consumer:
+    container_name: service-consumer
+    image: denoland/deno:alpine-1.38.0
+    restart: always
+    environment:
+      - TZ=Europe/Madrid
+      - PORT=8000
+      - MONGO_URL=mongodb://root:root@db-mongodb:27017
+      - MONGO_HOST=db-mongodb
+      - RABBITMQ_URL=amqp://guest:guest@service-rabbitmq:5672
+      - SMTP_HOST=service-maildev
+      - SMTP_PORT=1025
+    volumes:
+      - ./workers:/app
+    command: ["run", "--allow-net", "--allow-read", "--allow-write", "--allow-env", "--unstable", "app/queue_consumer.ts"]
+    depends_on:
+      - rabbitmq
+      - maildev
+  rabbitmq:
+    container_name: service-rabbitmq
+    image: rabbitmq:3.12.8-management-alpine
+    restart: always
+    ports:
+    - "5672:5672"
+    - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    volumes:
+      - ./config/rabbitmq/:/etc/rabbitmq/
+  mongodb:
+    container_name: db-mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=root
+    image: mongo:5
+    ports:
+    - "27017:27017"
+    restart: always
+    volumes:
+      - ./volumes/mongodb4-config:/data/configdb
+      - ./volumes/mongodb4-config:/var/lib/mongodb
+      - ./volumes/mongodb4-data:/data/db
+      - ./volumes/mongodb4-init:/docker-entrypoint-initdb.d
+  maildev:
+    container_name: service-maildev
+    image: maildev/maildev:2.1.0
+    restart: always
+    environment:
+      - TZ=Europe/Madrid
+      - MAILDEV_WEB_PORT=1080
+      - MAILDEV_SMTP_PORT=1025
+    ports:
+      - "8080:1080"
+      - "1025:1025"
+

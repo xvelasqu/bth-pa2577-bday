@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Birthday Reminders</title>
+</head>
+
+<body>
+    <h1>Add a new birthday reminder:</h1>
+
+    <form id="eventForm">
+        <label for="date">Birth date:</label>
+        <input type="date" id="date" name="date" required><br>
+        <br>
+        <label for="name">Name of your friend:</label>
+        <input type="text" id="name" name="name" required><br>
+        <br>
+        <label for="email">Your email address:</label>
+        <input type="email" id="email" name="email" required><br>
+
+        <br>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    <script>
+        document.getElementById('eventForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const date = document.getElementById('date').value;
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+
+            const eventData = {
+                date: date,
+                name: name,
+                email: email
+            };
+
+            fetch('/submitEvent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(eventData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Your reminder has been successfully registered! You will receive an email on the day of the birthday.');
+                })
+                .catch((error) => {
+                    alert('Something went wrong. Please try again later.');
+                });
+        });
+    </script>
+</body>
+
+</html>
