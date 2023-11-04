@@ -1,7 +1,20 @@
+# PersistentVolume
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: api-claim0
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /Users/xvelasqu/Repos/bth-pa2577-bday/api
+  storageClassName: hostpath
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  creationTimestamp: null
   labels:
     io.kompose.service: api-claim0
   name: api-claim0
@@ -11,4 +24,10 @@ spec:
   resources:
     requests:
       storage: 100Mi
-status: {}
+  volumeName: api-claim0
+  storageClassName: hostpath
+  volumeMode: Filesystem
+
+
+
+

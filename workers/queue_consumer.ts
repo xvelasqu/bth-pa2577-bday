@@ -12,12 +12,15 @@ const client = new SMTPClient({
     port: Number(Deno.env.get("SMTP_PORT")) || 465,
     tls: false,
   },
+  debug: {
+    allowUnsecure: true,
+  }
 });
 
 console.log("-- Consumer is ON! --");
 
-channel.consume({ queue: "email_queue" }, async (msg) => {
-  const payload = JSON.parse(msg.toString());
+channel.consume({ queue: "birthday_queue" }, async (args, props, data) => {
+  const payload = JSON.parse(new TextDecoder().decode(data));
 
   await client.send({
     from: "bday-reminders@example.org",
@@ -28,7 +31,7 @@ channel.consume({ queue: "email_queue" }, async (msg) => {
     // html: "<p>...</p>",
   });
 
+  await channel.ack({ deliveryTag: args.deliveryTag });
   await client.close();
 
-  channel.ack(msg);
 });

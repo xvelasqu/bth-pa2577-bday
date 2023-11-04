@@ -5,6 +5,7 @@ const rabbitmqConnection = await connect(
   Deno.env.get("RABBITMQ_URL") || "amqp://localhost:5672",
 );
 const rabbitmqChannel = await rabbitmqConnection.openChannel();
+rabbitmqChannel.declareQueue({ queue: "birthday_queue" });
 
 const mongoClient = new MongoClient();
 await mongoClient.connect(
@@ -49,5 +50,6 @@ function checkBirthdays() {
     });
 }
 
+checkBirthdays();
 // run every 24 hours
 setInterval(checkBirthdays, 86400);

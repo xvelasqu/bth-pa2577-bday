@@ -1,7 +1,6 @@
 import {
   Application,
   Router,
-  send,
 } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { MongoClient } from "https://deno.land/x/mongo@v0.32.0/mod.ts";
 
@@ -11,18 +10,6 @@ const client = new MongoClient();
 await client.connect(Deno.env.get("MONGO_URL") || "mongodb://localhost:27017");
 const db = client.database("myDB");
 const birthdaysCollection = db.collection("birthdays");
-
-//////
-// Static HTML
-//////
-app.use(async (ctx) => {
-  if (ctx.request.url.pathname === "/") {
-    await send(ctx, ctx.request.url.pathname, {
-      root: `${Deno.cwd()}/app/static`,
-      index: "index.html",
-    });
-  }
-});
 
 //////
 // API
@@ -38,12 +25,21 @@ router.post("/birthdays", async (ctx) => {
   const body = ctx.request.body();
   const { date, name, email } = await body.value;
 
+  const dateFormmatted: Date = new Date(date);
+
   await birthdaysCollection.insertOne({
-    date,
+    date: dateFormmatted,
     name,
     email,
   });
   ctx.response.body = { message: "Ok." };
+});
+
+router.get("/", async (ctx) => {
+  const filePath = `${Deno.cwd()}/app/static/index.html`;
+  const fileContent = await Deno.readTextFile(filePath);
+  ctx.response.body = fileContent;
+  ctx.response.type = 'text/html';
 });
 
 app.use(router.routes());
